@@ -6,10 +6,10 @@
 // Computes R0 = 2 + 3  (R0 refers to RAM[0])
 
 @20 // test
-D+1=A //trie
+D=A //trie
 @3
-D=D+A
+A=D+A
 @0
 MD=D-A ; JMP
 @20 // test
-D+1=A //trie
+DM=A //trie

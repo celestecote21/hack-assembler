@@ -7,6 +7,11 @@
 #include <map>
 #include "InstructionList.hpp"
 #include <vector>
+#include <algorithm>
+
+
+#include "TabConvert.hpp"
+#include "foncteur.hpp"
 
 using namespace std;
 
@@ -34,98 +39,50 @@ string CInstruct(char listPars[3][7]){
     stringstream ss;
     //ss << "111";
     string temp = listPars[1];
-    map<string, string> tabConvert;
-    tabConvert["0"] = "0101010";
-    tabConvert["1"] = "0111111";
-    tabConvert["-1"] = "0111010";
-    tabConvert["D"] = "0001100";
-    tabConvert["A"] = "0110000";
-    tabConvert["!D"] = "0001101";
-    tabConvert["!A"] = "0110001";
-    tabConvert["-D"] = "0001111";
-    tabConvert["-A"] = "0110011";
-    tabConvert["D+1"] = "0011111";
-    tabConvert["A+1"] = "0110111";
-    tabConvert["D-1"] = "0001110";
-    tabConvert["A-1"] = "0110010";
-    tabConvert["D+A"] = "0000010";
-    tabConvert["D-A"] = "0010011";
-    tabConvert["A-D"] = "0000111";
-    tabConvert["D&A"] = "0000000";
-    tabConvert["D|A"] = "0010101";
-    tabConvert["M"] = "1110000";
-    tabConvert["!M"] = "1110001";
-    tabConvert["-M"] = "1110011";
-    tabConvert["M+1"] = "1110111";
-    tabConvert["M-1"] = "1110010";
-    tabConvert["D+M"] = "1000010";
-    tabConvert["D-M"] = "1010011";
-    tabConvert["M-D"] = "1000111";
-    tabConvert["D&M"] = "1000000";
-    tabConvert["D|M"] = "1010101";
 
-    for(map<string, string>::iterator itMap = tabConvert.begin();
-                                    itMap != tabConvert.end(); 
-                                    itMap++){
-        if(temp.compare(itMap->first) == 0){
-            ss << "111" << itMap->second;
-        }
+    TabConvert tab_convert = TabConvert();
+    
+    ss << tab_convert.compToBin(temp);
+
+    temp.clear();
+    temp.assign(listPars[0]);
+
+    if(temp.find("A") != string::npos){
+        ss << '1';
+    }else
+    {
+        ss << '0';
+    }    
+    if(temp.find("D") != string::npos){
+        ss << '1';
+    }else
+    {
+        ss << '0';
+    }
+    if(temp.find("M") != string::npos){
+        ss << '1';
+    }else
+    {
+        ss << '0';
     }
 
-    // cout << "analyse temp " << endl << endl;
+    temp.clear();
+    temp.assign(listPars[2]);
 
-    // for(int k = 0; k < temp.size(); k++){
-    //     cout << (int)temp.at(k) << endl;
-    // }
-
-
-    // size_t found = temp.find("A");
-
-    // // pour le a 
-    // if (found != string::npos){
-    //     ss << "0"; // il y a "A" dans comp dans a = 0
-    // }else{
-    //     ss << "1";
-    // }
-      
-    // if (temp.find("|") != string::npos){// D|A ou D|M
-    //     ss << "010101";
-    // }else if(temp.find("D+A") == 0){ // D+A
-    //     ss << "000010";
-    // }else if(temp.find("D+1") == 0){ // D+1
-    //     ss << "011111";
-    // }else if(temp.find("A+1") == 0){ // A+1
-    //     ss << "110111";
-    // }else if(temp.find("M+1") == 0){ // M+1
-    //     ss << "110111";
-    // }else if(temp.find("D-1") == 0){ // D-1
-    //     ss << "001110";
-    // }else if(temp.find("D-A") == 0){ // D-A
-    //     ss << "010011";
-    // }else if(temp.find("D-M") == 0){ //D -M
-    //     ss << "010011";
-    // }else if(temp.find("&") != string::npos){ // D&A ou D&M
-    //     ss << "000000";
-    // }else if(temp.find("0") == 0){ // 0
-    //     ss << "101010";
-    // }else if (temp.find("1") == 0){ // 1
-    //     ss << "111111";
-    // }else if (temp.find("-1") == 0){ // -1
-    //     ss << "111010";
-    // }else if (temp.compare("D") == 0){ // D
-    //     ss << "001100";
-    // }else if(temp.compare("M") == 0){ // M
-    //     ss << "110000";
-    // }else if(temp.compare("A") == 0){ // A
-    //     ss << "110000";
-    // }
-    
-    cout <<  ss.str() << "  " << temp  << endl;
-
+    if(temp.empty()){
+        ss << "000";
+    }else{
+        ss << tab_convert.jumpToBin(temp);    
+    }
+    // cout <<  ss.str() << "  " << temp  << endl;
+    return ss.str();
 
 }
 
 vector<std::string> assToBin(vector<std::string>* pt_listAss){
+
+    vector<std::string> v;
+
     for(int i = 0; i < pt_listAss->size(); i++){
         string instBin;
         string line = pt_listAss->at(i);
@@ -187,6 +144,7 @@ vector<std::string> assToBin(vector<std::string>* pt_listAss){
             memcpy(listParse[1], temp, a);
             
             if(!*it_line){
+                memcpy(listParse[2], "", 7);
                 instBin = CInstruct(listParse); // on passe directement a la conversion en binaire si il y a rien d'autre a parser
             }else{
                 memset(temp, 0, 7);
@@ -207,11 +165,21 @@ vector<std::string> assToBin(vector<std::string>* pt_listAss){
 
             }            
         }
+
+        v.push_back(instBin);
     }
+    return v;
 }
 
 
-
+void saveToFile(std::vector<std::string> v, const char* name){
+    
+    std::ofstream file(name);
+    std::vector<std::string>::iterator it = v.begin();
+    for(it; it != v.end(); it++){
+        file << *it << std::endl;
+    }
+}
 
 
 int main(int argc, char** argv){
@@ -227,8 +195,9 @@ int main(int argc, char** argv){
     instructionList.parse();
 
 
-    assToBin(instructionList.getVector());
+    std::vector<std::string> v = assToBin(instructionList.getVector());
 
+    saveToFile(v, "name.hack");
     //instructionList.print();
 
 }
