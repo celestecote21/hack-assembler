@@ -2,44 +2,50 @@
 #include <string>
 #include <sstream>
 #include <iterator>
-#include <stdio.h>
 #include <string.h>
-#include <map>
-#include "InstructionList.hpp"
 #include <vector>
-#include <algorithm>
 
-
+#include "InstructionList.hpp"
 #include "TabConvert.hpp"
-#include "foncteur.hpp"
+
 
 using namespace std;
 
 
-unsigned int_to_int(unsigned k) {
+unsigned long int_to_int(unsigned long k) {
     if (k == 0) return 0;
     if (k == 1) return 1;                       /* optional */
     return (k % 2) + 10 * int_to_int(k / 2);
 }
 
+/*
+*convertie une string representant un nobre en binaire (donne l'addresse)
+*/
 string strToBin(string str){
-    int nbDec = stoi(str);
+    int nbDec = 0;
+    try{
+    nbDec = stoi(str);
+    }
+    catch(exception e){
+        std::cerr << e.what() << std::endl;
+        exit(-1);
+    }
     stringstream ss;
     ss << int_to_int(nbDec);
     string str_final = ss.str();
-    
-
     return str_final;
 }
 
 
-
-
+/*
+* a partir de la dest du comp et du jump va creer le code binnaire
+* utilisation de la classe TabConvert ou sont resengner les equivalences
+*/
 string CInstruct(char listPars[3][7]){
     stringstream ss;
     //ss << "111";
     string temp = listPars[1];
-
+    
     TabConvert tab_convert = TabConvert();
     
     ss << tab_convert.compToBin(temp);
@@ -79,6 +85,11 @@ string CInstruct(char listPars[3][7]){
 
 }
 
+/*
+* convertie les lignes d'assembler en code binaire
+* definie deja si c'est une A instruction ou une C instruction
+* puis renvoie a des fonctions pour finir de les convertir en binaire
+*/
 vector<std::string> assToBin(vector<std::string>* pt_listAss){
 
     vector<std::string> v;
@@ -119,7 +130,7 @@ vector<std::string> assToBin(vector<std::string>* pt_listAss){
                 break;
             }
             int a = 0;
-            while (*it_line != '=')
+            while (*it_line != '=' && *it_line != ';')
             {
                 if(*it_line != ' ' && (int)*it_line != 13){ // pour ne prendre vraiment que l'instruction
                     temp[a] = *it_line;
@@ -127,14 +138,19 @@ vector<std::string> assToBin(vector<std::string>* pt_listAss){
                 }
                 it_line++;
             }
-            memcpy(listParse[0], temp, a);
+            
+            if(*it_line == '='){ // si il y a bien une partie destination
+                memcpy(listParse[0], temp, a);
+                memset(temp, 0, 7);
+                a = 0;
+                it_line ++; // on va apres le egal
+            }else if(*it_line == ';'){ //si il n'a pas de parti destination, on met le dans la partie comp au lieu de dest et o laisse au ; pour pas que c continue
+                memcpy(listParse[1], temp, a);
+                // memset(temp, 0, 7); // on met pas a zeros car on va le remetre dans la memoire apres
+                a = 0;
+            }
 
-            memset(temp, 0, 7);
-            a = 0;
-            it_line ++; // on va apres le egal
-
-            while (*it_line != ';' && *it_line)
-            {
+            while (*it_line != ';' && *it_line){
                 if(*it_line != ' ' && (int)*it_line != 13){ // pour ne prendre vraiment que l'instruction
                     temp[a] = *it_line;
                     a++;
@@ -165,13 +181,15 @@ vector<std::string> assToBin(vector<std::string>* pt_listAss){
 
             }            
         }
-
+        // std::cout << instBin << std::endl;
         v.push_back(instBin);
     }
     return v;
 }
 
-
+/*
+* enregistre le resultat de la converstion dans un fichier
+*/
 void saveToFile(std::vector<std::string> v, const char* name){
     
     std::ofstream file(name);
@@ -197,7 +215,7 @@ int main(int argc, char** argv){
 
     std::vector<std::string> v = assToBin(instructionList.getVector());
 
-    saveToFile(v, "name.hack");
+    saveToFile(v, instructionList.getName().c_str());
     //instructionList.print();
 
 }

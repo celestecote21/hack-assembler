@@ -36,7 +36,10 @@ TabConvert::TabConvert(/* args */)
     tabConvertComp["D|M"] = "1010101";
 
 
-
+    /*
+    * remplissage de la table convertissant les partie jump de l'assembleur en binaire
+    *
+    */
     tabConvertJump["JGT"] = "001";
     tabConvertJump["JEQ"] = "010";
     tabConvertJump["JGE"] = "011";
